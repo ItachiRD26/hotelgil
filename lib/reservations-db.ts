@@ -1,122 +1,137 @@
-import { db } from "./firebase";
-import { ref, push, get, remove, update, child } from "firebase/database";
-import { Reservation, PaymentStatus, ReservedRoom } from "./reservation";
-import { rooms } from "./room";
+import { db } from "@/lib/firebase";
+import {
+  ref,
+  get,
+  set,
+  update,
+  remove,
+  child,
+} from "firebase/database";
+import { Reservation } from "@/types/reservation";
+import { Room } from "@/types/room"; // 👈 ahora importamos desde room.ts
+import { v4 as uuidv4 } from "uuid";
 
-// Calcular precio total de habitaciones × noches
-function calculateTotal(roomsSelected: ReservedRoom[], checkin: string, checkout: string): number {
-  const nights =
-    (new Date(checkout).getTime() - new Date(checkin).getTime()) /
-    (1000 * 60 * 60 * 24);
-  return roomsSelected.reduce((acc, r) => acc + r.price * nights, 0);
+// Crear una reserva
+export async function createReservation(reservation: Omit<Reservation, "reservationId">) {
+  const reservationId = uuidv4();
+  const reservationRef = ref(db, `reservations/${reservationId}`);
+  await set(reservationRef, { ...reservation, reservationId });
+  return reservationId;
 }
 
-// Crear reserva
-export async function createReservation(data: {
-  guestName: string;
-  rooms: ReservedRoom[];
-  checkinDate: string;
-  checkoutDate: string;
-  paymentStatus: PaymentStatus;
-  paymentMethod: string;
-  amountPaid: number;
-}) {
-  const totalPrice = calculateTotal(data.rooms, data.checkinDate, data.checkoutDate);
-  const remaining = totalPrice - data.amountPaid;
-
-  const newRes: Omit<Reservation, "reservationId"> = {
-    guestName: data.guestName,
-    rooms: data.rooms,
-    checkinDate: data.checkinDate,
-    checkoutDate: data.checkoutDate,
-    paymentStatus: data.paymentStatus,
-    paymentMethod: data.paymentMethod,
-    amountPaid: data.amountPaid,
-    totalPrice,
-    remaining,
-  };
-
-  await push(ref(db, "reservations"), newRes);
-}
-
-// Obtener reservas de un día
+// Obtener reservas por fecha (YYYY-MM-DD)
 export async function getReservationsByDate(date: string): Promise<Reservation[]> {
   const snapshot = await get(ref(db, "reservations"));
   if (!snapshot.exists()) return [];
 
-  const all: { [key: string]: Reservation } = snapshot.val();
-  return Object.entries(all)
-    .map(([id, r]) => ({ ...r, reservationId: id }))
-    .filter(
-      (r) =>
-        new Date(date) >= new Date(r.checkinDate) &&
-        new Date(date) <= new Date(r.checkoutDate)
-    );
+  const data = snapshot.val();
+  return Object.values(data).filter((r: any) => {
+    return r.checkinDate <= date && r.checkoutDate >= date;
+  }) as Reservation[];
 }
 
-// Eliminar reserva
-export async function deleteReservation(reservationId: string) {
-  await remove(ref(db, `reservations/${reservationId}`));
-}
-
-// Actualizar estado de pago
-export async function updatePaymentStatus(reservationId: string, status: PaymentStatus) {
-  const snap = await get(child(ref(db), `reservations/${reservationId}`));
-  if (!snap.exists()) return;
-
-  const data = snap.val() as Reservation;
-  await update(ref(db, `reservations/${reservationId}`), {
-    paymentStatus: status,
-  });
-}
-
-// Obtener resumen mensual
-export async function getMonthDayIndex(start: string, end: string) {
+// Obtener índice de días entre checkin y checkout
+export async function getMonthDayIndex(from: string, to: string) {
   const snapshot = await get(ref(db, "reservations"));
   if (!snapshot.exists()) return [];
 
-  const all: { [key: string]: Reservation } = snapshot.val();
-  return Object.entries(all).flatMap(([id, r]) => {
-    const arr: any[] = [];
-    const current = new Date(r.checkinDate);
-    const checkout = new Date(r.checkoutDate);
+  const data = snapshot.val();
+  const results: {
+    date: string;
+    guestName: string;
+    roomNumbers: string[];
+    paymentStatus: string;
+    amountPaid: number;
+  }[] = [];
 
-    while (current <= checkout) {
-      const ymd = current.toISOString().split("T")[0];
-      arr.push({
-        date: ymd,
-        reservationId: id,
-        guestName: r.guestName,
-        roomNumbers: r.rooms.map((rm) => rm.number).join(", "),
-        roomTypes: r.rooms.map((rm) => rm.type).join(", "),
-        paymentStatus: r.paymentStatus,
-        amountPaid: r.amountPaid,
-      });
-      current.setDate(current.getDate() + 1);
+  Object.values(data).forEach((r: any) => {
+    const res: Reservation = r as Reservation;
+    let d = new Date(from);
+    const end = new Date(to);
+
+    while (d <= end) {
+      const dStr = d.toISOString().split("T")[0];
+      if (res.checkinDate <= dStr && res.checkoutDate >= dStr) {
+        results.push({
+          date: dStr,
+          guestName: res.guestName,
+          roomNumbers: res.rooms.map((room: Room) => room.roomNumber),
+          paymentStatus: res.paymentStatus,
+          amountPaid: res.amountPaid,
+        });
+      }
+      d.setDate(d.getDate() + 1);
     }
-    return arr;
   });
 
+  return results;
 }
 
-// Resumen del mes
+// Actualizar una reserva
+export async function updateReservation(
+  reservationId: string,
+  updates: Partial<Reservation>
+) {
+  const reservationRef = ref(db, `reservations/${reservationId}`);
+  await update(reservationRef, updates);
+}
+
+// Eliminar una reserva
+export async function deleteReservation(reservationId: string) {
+  const reservationRef = ref(db, `reservations/${reservationId}`);
+  await remove(reservationRef);
+}
+
 export async function getMonthStats(year: number, month: number) {
   const snapshot = await get(ref(db, "reservations"));
-  if (!snapshot.exists()) return { total: 0, cobrado: 0, pendiente: 0 };
+  if (!snapshot.exists()) {
+    return { total: 0, cobrado: 0, pendiente: 0 };
+  }
 
-  const all: { [key: string]: Reservation } = snapshot.val();
+  const data = snapshot.val();
+  let total = 0;
+  let cobrado = 0;
+  let pendiente = 0;
 
-  const stats = { total: 0, cobrado: 0, pendiente: 0 };
+  // Rango del mes que se está calculando
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0); // último día del mes
 
-  Object.values(all).forEach((r) => {
+  Object.values(data).forEach((r: any) => {
     const checkin = new Date(r.checkinDate);
-    if (checkin.getFullYear() === year && checkin.getMonth() === month) {
-      stats.total += r.totalPrice;
-      stats.cobrado += r.amountPaid;
-      stats.pendiente += r.remaining;
+    const checkout = new Date(r.checkoutDate);
+
+    // Determinar intersección entre la reserva y el mes actual
+    const start = checkin < monthStart ? monthStart : checkin;
+    const end = checkout > monthEnd ? monthEnd : checkout;
+
+    if (end < monthStart || start > monthEnd) {
+      // No cae dentro del mes
+      return;
+    }
+
+    // Noches que caen dentro de este mes
+    const nights = Math.max(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+      1
+    );
+
+    const monto = r.rooms.reduce(
+      (sum: number, room: any) => sum + (room.price || 0) * nights,
+      0
+    );
+
+    total += monto;
+
+    if (r.paymentStatus === "pagado") {
+      cobrado += monto;
+    } else {
+      const pago = r.amountPaid || 0;
+      cobrado += pago > monto ? monto : pago;
+      pendiente += monto - (pago > monto ? monto : pago);
     }
   });
 
-  return stats;
+  return { total, cobrado, pendiente };
 }
 

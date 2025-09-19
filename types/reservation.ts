@@ -1,13 +1,14 @@
-export type PaymentStatus = "Parcial" | "Completo";
+import { Room } from "./room";
+
+export type PaymentStatus = "parcial" | "pagado";
 export type PaymentMethod = "Efectivo" | "Transferencia" | "Tarjeta";
 
 export interface Reservation {
   reservationId: string;
   guestName: string;
-  roomNumber: string;
-  roomType: string;
-  startDate: string;
-  endDate: string;
+  rooms: Room[];
+  checkinDate: string;   // YYYY-MM-DD
+  checkoutDate: string;  // YYYY-MM-DD
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   amountPaid: number;

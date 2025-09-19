@@ -1,14 +1,33 @@
-export type Room = {
-  number: string;
-  type: "Sencilla" | "Doble";
-  price: number;
-};
+import { Room } from "@/types/room";
 
 export const rooms: Room[] = [
-  { number: "101", type: "Sencilla", price: 1500 },
-  { number: "102", type: "Sencilla", price: 1500 },
-  { number: "103", type: "Sencilla", price: 1500 },
-  { number: "201", type: "Doble", price: 2500 },
-  { number: "202", type: "Doble", price: 2500 },
-  { number: "203", type: "Doble", price: 2500 },
+  { roomNumber: "03", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "04", roomType: "VIP", price: 1700 },
+  { roomNumber: "05", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "101", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "107", roomType: "Doble", price: 1700 },
+  { roomNumber: "102", roomType: "Doble", price: 1700 },
+  { roomNumber: "103", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "104", roomType: "Triple", price: 2500 },
+  { roomNumber: "105", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "106", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "201", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "202", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "203", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "204", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "205", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "206", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "207", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "208", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "209", roomType: "Doble", price: 1700 },
+  { roomNumber: "210", roomType: "Doble", price: 1700 },
+  { roomNumber: "211", roomType: "Doble", price: 1700 },
+  { roomNumber: "212", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "213", roomType: "Doble", price: 1700 },
+  { roomNumber: "214", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "215", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "216", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "217", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "218", roomType: "Sencilla", price: 1200 },
+  { roomNumber: "219", roomType: "Sencilla", price: 1200 },
 ];

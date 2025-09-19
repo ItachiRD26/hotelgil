@@ -5,6 +5,11 @@ import { Toaster } from "react-hot-toast";
 export const metadata: Metadata = {
   title: "Hotel Gil",
   description: "Sistema de reservas",
+  icons: {
+    icon: "/logo-sinfondo.png", // Favicon principal
+    shortcut: "/logo-sinfondo.png", // Atajo
+    apple: "/logo-sinfondo.png", // Apple touch icon
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
