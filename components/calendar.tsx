@@ -1,50 +1,57 @@
-"use client";
+"use client"
 
-import { useState, useRef } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import esLocale from "@fullcalendar/core/locales/es";
-import CalendarModal from "./calendar-modal";
-import { getMonthDayIndex } from "@/lib/reservations-db";
-import { toYMD } from "@/lib/date-utils";
-import DashboardStats, { DashboardStatsRef } from "./dashboard-stats";
+import { useState, useRef } from "react"
+import FullCalendar from "@fullcalendar/react"
+import dayGridPlugin from "@fullcalendar/daygrid"
+import interactionPlugin from "@fullcalendar/interaction"
+import esLocale from "@fullcalendar/core/locales/es"
+import CalendarModal from "./calendar-modal"
+import { getMonthDayIndex } from "@/lib/reservations-db"
+import { toYMD } from "@/lib/date-utils"
+import DashboardStats, { type DashboardStatsRef } from "./dashboard-stats"
 
-type CalEvent = { title: string; start: string; allDay: true; color: string };
+type CalEvent = { title: string; start: string; allDay: true; color: string }
+
+interface DatesSetArg {
+  start: Date
+  end: Date
+  view: {
+    currentStart?: Date
+  }
+}
 
 export default function Calendar() {
-  const [events, setEvents] = useState<CalEvent[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [events, setEvents] = useState<CalEvent[]>([])
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string>("")
 
-  const statsRef = useRef<DashboardStatsRef>(null);
-  // Guardamos el último arg de datesSet para reusar al cerrar el modal
-  const lastDatesArgRef = useRef<any | null>(null);
+  const statsRef = useRef<DashboardStatsRef>(null)
+  const lastDatesArgRef = useRef<DatesSetArg | null>(null)
 
   const loadRange = async (start: Date, end: Date) => {
-    const startY = toYMD(start);
-    const endY = toYMD(end);
-    const dayIndex = await getMonthDayIndex(startY, endY);
+    const startY = toYMD(start)
+    const endY = toYMD(end)
+    const dayIndex = await getMonthDayIndex(startY, endY)
 
     const evs: CalEvent[] = dayIndex.map((d) => ({
       title: `${d.guestName} – Hab(s): ${d.roomNumbers.join(", ")}`,
       start: d.date,
       allDay: true,
       color: d.paymentStatus === "pagado" ? "#22c55e" : "#eab308",
-    }));
-    setEvents(evs);
-  };
+    }))
+    setEvents(evs)
+  }
 
   // ✅ Siempre refrescamos stats con el PRIMER DÍA DEL MES VISIBLE
-  const handleDatesChange = (arg: any) => {
-    const { start, end, view } = arg;
-    loadRange(start, end);
+  const handleDatesChange = (arg: DatesSetArg) => {
+    const { start, end, view } = arg
+    loadRange(start, end)
 
     // En month view, currentStart es el 1er día del mes; start puede ser fin del mes anterior
-    const base: Date = view?.currentStart ?? start;
-    const firstOfMonth = new Date(base.getFullYear(), base.getMonth(), 1);
-    statsRef.current?.refresh(firstOfMonth);
-  };
+    const base: Date = view?.currentStart ?? start
+    const firstOfMonth = new Date(base.getFullYear(), base.getMonth(), 1)
+    statsRef.current?.refresh(firstOfMonth)
+  }
 
   return (
     <div className="bg-white shadow-lg rounded-xl p-4">
@@ -55,8 +62,8 @@ export default function Calendar() {
         initialView="dayGridMonth"
         events={events}
         dateClick={(info) => {
-          setSelectedDate(info.dateStr);
-          setIsModalOpen(true);
+          setSelectedDate(info.dateStr)
+          setIsModalOpen(true)
         }}
         height="80vh"
         locale={esLocale}
@@ -66,8 +73,8 @@ export default function Calendar() {
           right: "dayGridMonth,dayGridWeek,dayGridDay",
         }}
         datesSet={(arg) => {
-          lastDatesArgRef.current = arg; // guardamos el último rango visible
-          handleDatesChange(arg);
+          lastDatesArgRef.current = arg // guardamos el último rango visible
+          handleDatesChange(arg)
         }}
       />
 
@@ -79,20 +86,20 @@ export default function Calendar() {
           onDataChange={() => {
             // Al guardar desde el modal, recargamos con el mes actualmente visible
             if (lastDatesArgRef.current) {
-              handleDatesChange(lastDatesArgRef.current);
+              handleDatesChange(lastDatesArgRef.current)
             } else {
               // Fallback: mes actual
-              const now = new Date();
+              const now = new Date()
               const fakeArg = {
                 start: new Date(now.getFullYear(), now.getMonth(), 1),
                 end: new Date(now.getFullYear(), now.getMonth() + 1, 0),
                 view: { currentStart: new Date(now.getFullYear(), now.getMonth(), 1) },
-              };
-              handleDatesChange(fakeArg);
+              }
+              handleDatesChange(fakeArg)
             }
           }}
         />
       )}
     </div>
-  );
+  )
 }

@@ -7,7 +7,7 @@ import {
   deleteReservation,
 } from "@/lib/reservations-db";
 import Toast from "./toast";
-import { normalizeDate, toLocalDMY } from "@/utils/date";
+import { normalizeDate } from "@/utils/date";
 
 interface Props {
   reservation: Reservation;
