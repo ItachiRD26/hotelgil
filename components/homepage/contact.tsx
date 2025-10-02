@@ -16,7 +16,7 @@ export default function Contact() {
       title: "Teléfono",
       desc: "+1 (809) 579-2629",
       icon: <FaPhoneAlt size={36} className="text-yellow-600" />,
-      link: "tel:+18095792629",
+      link: "tel:+18296707464",
       label: "Llamar",
     },
     {

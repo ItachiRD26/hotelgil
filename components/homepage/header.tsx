@@ -39,17 +39,17 @@ export default function Header() {
               Calle Rodriguez Camargo #123, Montecristi, República Dominicana
             </span>
           </a>
-          <a href="tel:+18095792629" className="flex items-center space-x-2 hover:underline">
+          <a href="tel:+18296707464" className="flex items-center space-x-2 hover:underline">
             <FaPhoneAlt size={14} className="text-white" />
             <span>+1 (809) 579-2629</span>
           </a>
         </div>
 
         <div className="flex space-x-4">
-          <a href="https://wa.me/18095792629" target="_blank" className="hover:text-black transition">
+          <a href="https://wa.me/18296707464" target="_blank" className="hover:text-black transition">
             <FaWhatsapp size={18} />
           </a>
-          <a href="https://facebook.com/" target="_blank" className="hover:text-black transition">
+          <a href="https://www.facebook.com/profile.php?id=61581648513179" target="_blank" className="hover:text-black transition">
             <FaFacebookF size={18} />
           </a>
           <a href="https://www.instagram.com/hotelgil_rd/" target="_blank" className="hover:text-black transition">
@@ -82,7 +82,7 @@ export default function Header() {
 
         {/* CTA */}
         <a
-          href="https://wa.me/18095792629"
+          href="https://wa.me/18296707464"
           target="_blank"
           className="hidden md:inline-block bg-yellow-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-yellow-700 transition"
         >
@@ -119,7 +119,7 @@ export default function Header() {
               </Link>
             ))}
             <a
-              href="https://wa.me/18095792629"
+              href="https://wa.me/18296707464"
               target="_blank"
               className="block bg-yellow-600 text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-yellow-700 transition text-center"
             >
