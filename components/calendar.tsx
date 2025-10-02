@@ -12,6 +12,14 @@ import DashboardStats, { type DashboardStatsRef } from "./dashboard-stats"
 
 type CalEvent = { title: string; start: string; allDay: true; color: string }
 
+interface DayReservation {
+  guestName?: string;
+  date: string;
+  paymentStatus?: string;
+  roomNumbers?: string[];
+  rooms?: { roomNumber: string }[];
+}
+
 interface DatesSetArg {
   start: Date
   end: Date
@@ -33,12 +41,19 @@ export default function Calendar() {
     const endY = toYMD(end)
     const dayIndex = await getMonthDayIndex(startY, endY)
 
-    const evs: CalEvent[] = dayIndex.map((d) => ({
-      title: `${d.guestName} – Hab(s): ${d.roomNumbers.join(", ")}`,
-      start: d.date,
-      allDay: true,
-      color: d.paymentStatus === "pagado" ? "#22c55e" : "#eab308",
-    }))
+    const evs: CalEvent[] = dayIndex.map((d: DayReservation) => {
+      // 🔹 fallback por si roomNumbers no existe
+      const roomNumbers =
+        d.roomNumbers || (d.rooms ? d.rooms.map((r: { roomNumber: string }) => r.roomNumber) : [])
+
+      return {
+        title: `${d.guestName || "Sin nombre"} – Hab(s): ${roomNumbers.join(", ")}`,
+        start: d.date,
+        allDay: true,
+        color: d.paymentStatus === "pagado" ? "#22c55e" : "#eab308",
+      }
+    })
+
     setEvents(evs)
   }
 
@@ -84,19 +99,15 @@ export default function Calendar() {
           onClose={() => setIsModalOpen(false)}
           selectedDate={selectedDate}
           onDataChange={() => {
-            // Al guardar desde el modal, recargamos con el mes actualmente visible
+            // 🔹 Recargamos eventos del calendario
             if (lastDatesArgRef.current) {
               handleDatesChange(lastDatesArgRef.current)
-            } else {
-              // Fallback: mes actual
-              const now = new Date()
-              const fakeArg = {
-                start: new Date(now.getFullYear(), now.getMonth(), 1),
-                end: new Date(now.getFullYear(), now.getMonth() + 1, 0),
-                view: { currentStart: new Date(now.getFullYear(), now.getMonth(), 1) },
-              }
-              handleDatesChange(fakeArg)
             }
+
+            // 🔹 Refrescamos estadísticas
+            const now = new Date()
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+            statsRef.current?.refresh(firstOfMonth)
           }}
         />
       )}

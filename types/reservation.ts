@@ -1,6 +1,7 @@
 import { Room } from "./room";
 
-export type PaymentStatus = "parcial" | "pagado";
+export type PaymentStatus = "pendiente" | "parcial" | "pagado";
+
 export type PaymentMethod = "Efectivo" | "Transferencia" | "Tarjeta";
 
 export interface Reservation {

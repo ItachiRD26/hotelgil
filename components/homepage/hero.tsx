@@ -21,11 +21,11 @@ export default function Hero() {
           Confort y elegancia en cada estancia
         </p>
         <a
-          href="https://wa.me/18090000000" // 🔹 tu WhatsApp Business
+          href="https://wa.me/18095792629" // 🔹 tu WhatsApp Business
           target="_blank"
           className="bg-yellow-600 text-white px-8 py-4 rounded-lg font-semibold shadow-xl hover:bg-yellow-700 hover:scale-105 transition transform"
         >
-          Reserva ahora por WhatsApp
+          Reserva ahora
         </a>
       </div>
     </section>

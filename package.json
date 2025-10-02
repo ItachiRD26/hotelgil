@@ -17,6 +17,8 @@
     "date-fns": "^4.1.0",
     "firebase": "^12.2.1",
     "framer-motion": "^12.23.15",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "next": "15.5.3",
     "react": "19.1.0",
     "react-big-calendar": "^1.19.4",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/css": "^0.0.38",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-big-calendar": "^1.16.3",

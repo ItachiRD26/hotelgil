@@ -1,82 +1,80 @@
-"use client";
+"use client"
 
-import { useEffect, useImperativeHandle, useState, forwardRef } from "react";
-import { getMonthStats } from "@/lib/reservations-db";
-import ExportModal from "./export-modal";
+import { useEffect, useImperativeHandle, useState, forwardRef } from "react"
+import { getMonthStats } from "@/lib/reservations-db"
+import ExportModal from "./export-modal"
 
-export type DashboardStatsRef = {
-  refresh: (start?: Date) => void;
-};
-
-interface Stats {
-  total: number;
-  cobrado: number;
-  pendiente: number;
+export interface DashboardStatsRef {
+  refresh: (date: Date) => void
 }
 
 const DashboardStats = forwardRef<DashboardStatsRef>((props, ref) => {
-  const [stats, setStats] = useState<Stats>({
-    total: 0,
-    cobrado: 0,
-    pendiente: 0,
-  });
+  const [total, setTotal] = useState(0)
+  const [cobrado, setCobrado] = useState(0)
+  const [pendiente, setPendiente] = useState(0)
+  const [exportOpen, setExportOpen] = useState(false)
 
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-
-  const loadStats = async (start?: Date) => {
-    const date = start || new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth(); // 0 = enero
-    const data = await getMonthStats(year, month);
-    setStats(data);
-  };
-
-  useEffect(() => {
-    loadStats();
-  }, []);
+  const loadStats = async (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const { total, cobrado, pendiente } = await getMonthStats(year, month)
+    setTotal(total)
+    setCobrado(cobrado)
+    setPendiente(pendiente)
+  }
 
   useImperativeHandle(ref, () => ({
-    refresh: (start?: Date) => loadStats(start),
-  }));
+    refresh: (date: Date) => loadStats(date),
+  }))
+
+  useEffect(() => {
+    loadStats(new Date())
+  }, [])
 
   return (
-    <div className="rounded-lg border p-4 shadow-sm bg-white mb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-700">Estadísticas del mes</h3>
+    <div className="mb-6">
+      <h3 className="mb-3 text-lg font-semibold">Estadísticas del mes</h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* Total facturado */}
+        <div className="rounded-xl border bg-blue-50 p-4 shadow">
+          <h4 className="text-sm font-medium text-gray-600">Total facturado</h4>
+          <p className="mt-1 text-2xl font-bold text-blue-700">
+            RD${total.toLocaleString()}
+          </p>
+        </div>
+
+        {/* Cobrado */}
+        <div className="rounded-xl border bg-green-50 p-4 shadow">
+          <h4 className="text-sm font-medium text-gray-600">Cobrado</h4>
+          <p className="mt-1 text-2xl font-bold text-green-700">
+            RD${cobrado.toLocaleString()}
+          </p>
+        </div>
+
+        {/* Pendiente */}
+        <div className="rounded-xl border bg-yellow-50 p-4 shadow">
+          <h4 className="text-sm font-medium text-gray-600">Pendiente</h4>
+          <p className="mt-1 text-2xl font-bold text-yellow-700">
+            RD${pendiente.toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* Botón exportar */}
+      <div className="mt-4 flex justify-end">
         <button
-          onClick={() => setIsExportModalOpen(true)}
-          className="ml-auto rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 shadow cursor-pointer"
+          onClick={() => setExportOpen(true)}
+          className="rounded bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700"
         >
           📊 Exportar Datos
         </button>
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded bg-gray-100 p-3">
-          <p className="text-sm font-medium">Total facturado</p>
-          <p className="text-lg font-bold">RD${stats.total.toLocaleString()}</p>
-        </div>
-        <div className="rounded bg-green-100 p-3">
-          <p className="text-sm font-medium">Cobrado</p>
-          <p className="text-lg font-bold text-green-600">
-            RD${stats.cobrado.toLocaleString()}
-          </p>
-        </div>
-        <div className="rounded bg-yellow-100 p-3">
-          <p className="text-sm font-medium">Pendiente</p>
-          <p className="text-lg font-bold text-yellow-600">
-            RD${stats.pendiente.toLocaleString()}
-          </p>
-        </div>
-      </div>
 
-      {/* Modal de exportación */}
-      <ExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-      />
+      {exportOpen && <ExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />}
     </div>
-  );
-});
+  )
+})
 
-DashboardStats.displayName = "DashboardStats";
-export default DashboardStats;
+DashboardStats.displayName = "DashboardStats"
+
+export default DashboardStats

@@ -1,4 +1,4 @@
-import "./globals.css";
+import "./global.css";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 
@@ -33,6 +33,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           }}
         />
+
+        <script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: `
+{
+  "@context": "https://schema.org",
+  "@type": "Hotel",
+  "name": "Hotel Gil",
+  "image": "https://hotelgil.com.do/hotel-hero.jpg",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Calle Rodriguez Camargo #123",
+    "addressLocality": "Montecristi",
+    "addressRegion": "Montecristi",
+    "postalCode": "62000",
+    "addressCountry": "DO"
+  },
+  "telephone": "+1-809-000-0000",
+  "url": "https://hotelgil.com.do",
+  "priceRange": "$$",
+  "amenityFeature": [
+    { "@type": "LocationFeatureSpecification", "name": "WiFi gratis", "value": true },
+    { "@type": "LocationFeatureSpecification", "name": "Aire acondicionado", "value": true },
+    { "@type": "LocationFeatureSpecification", "name": "Restaurante", "value": true },
+    { "@type": "LocationFeatureSpecification", "name": "Parqueo", "value": true }
+  ]
+}
+    `,
+  }}
+/>
+
       </body>
     </html>
   );

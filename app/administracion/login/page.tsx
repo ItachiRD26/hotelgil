@@ -1,10 +1,14 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth"
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  setPersistence, 
+  browserLocalPersistence 
+} from "firebase/auth"
 import { app } from "@/lib/firebase"
 import Image from "next/image"
 
@@ -19,6 +23,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      await setPersistence(auth, browserLocalPersistence) // 👈 aquí activas la caché local
       await signInWithEmailAndPassword(auth, email, password)
       router.push("/administracion/dashboard")
     } catch {
@@ -32,7 +37,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/logo-hotelgil.png" // guarda tu logo en /public/logo-hotelgil.png
+            src="/logo-hotelgil.png"
             alt="Hotel Gil Logo"
             width={180}
             height={180}
@@ -69,7 +74,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="mt-6 text-center text-sm text-gray-500">
           © {new Date().getFullYear()} Hotel Gil. Todos los derechos reservados.
         </p>

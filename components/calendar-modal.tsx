@@ -19,7 +19,6 @@ interface CalendarModalProps {
 type OccupyRange = { from: string; to: string }
 type OccupiedMap = Record<string, OccupyRange | undefined>
 
-// 👉 función utilitaria para fecha local RD
 function getTodayDR() {
   const now = new Date()
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -28,13 +27,12 @@ function getTodayDR() {
     month: "2-digit",
     day: "2-digit",
   })
-  return fmt.format(now) // "YYYY-MM-DD"
+  return fmt.format(now)
 }
 
 export default function CalendarModal({ isOpen, onClose, selectedDate, onDataChange }: CalendarModalProps) {
   const [guestName, setGuestName] = useState("")
   const [checkoutDate, setCheckoutDate] = useState("")
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("parcial")
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Efectivo")
   const [amountPaid, setAmountPaid] = useState(0)
 
@@ -62,8 +60,9 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
 
   useEffect(() => {
     if (isOpen) loadReservations()
-  }, [isOpen, loadReservations]) // Added loadReservations to dependencies
+  }, [isOpen, loadReservations])
 
+  // cerrar dropdown al click fuera
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (!ddRef.current) return
@@ -73,6 +72,7 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
     return () => document.removeEventListener("mousedown", onDocClick)
   }, [])
 
+  // mapa de ocupación para tooltips/disabled
   useEffect(() => {
     const computeOccupied = async () => {
       if (!selectedDate) return
@@ -124,10 +124,7 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
     setSelectedRooms((prev) => {
       const already = prev.some((r) => r.roomNumber === room.roomNumber)
       const updated = already ? prev.filter((r) => r.roomNumber !== room.roomNumber) : [...prev, room]
-
-      if (!multiSelect) {
-        setDdOpen(false)
-      }
+      if (!multiSelect) setDdOpen(false)
       return updated
     })
   }
@@ -145,7 +142,9 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
 
     const totalRoomsAmount = selectedRooms.reduce((s, r) => s + r.price * nights, 0)
 
-    const finalAmount = paymentStatus === "pagado" ? totalRoomsAmount : amountPaid
+    // Determinar estado automáticamente
+    const paymentStatus: PaymentStatus =
+      amountPaid >= totalRoomsAmount ? "pagado" : amountPaid > 0 ? "parcial" : "pendiente"
 
     await createReservation({
       guestName,
@@ -154,7 +153,7 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
       checkoutDate: normalizeDate(checkoutDate),
       paymentStatus,
       paymentMethod,
-      amountPaid: finalAmount,
+      amountPaid,
     })
 
     onDataChange()
@@ -162,7 +161,6 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
 
     setGuestName("")
     setCheckoutDate("")
-    setPaymentStatus("parcial")
     setPaymentMethod("Efectivo")
     setAmountPaid(0)
     setSelectedRooms([])
@@ -179,6 +177,13 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
       : 1
 
   const totalRoomsAmount = selectedRooms.reduce((s, r) => s + r.price * nights, 0)
+  const pendiente = Math.max(totalRoomsAmount - amountPaid, 0)
+
+  // Texto resumen del trigger (cuando es múltiple)
+  const summaryText =
+    selectedRooms.length === 0
+      ? "Seleccionar habitación(es)"
+      : `Habitaciones (${selectedRooms.length}): ${selectedRooms.map((r) => r.roomNumber).join(", ")}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-400/70 backdrop-blur-sm">
@@ -206,115 +211,152 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
               type="date"
               className="mb-3 w-full rounded border p-2"
               value={checkoutDate}
-              min={selectedDate || today} // ✅ permite seleccionar hoy
+              min={selectedDate || today}
               onChange={(e) => setCheckoutDate(e.target.value)}
             />
 
-            {/* Dropdown */}
-            <div className="mb-3" ref={ddRef}>
-              <div className="flex items-center justify-between mb-1">
+            {/* Selección habitaciones */}
+            <div className="mb-3 relative" ref={ddRef}>
+              <div className="mb-1 flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Habitaciones disponibles</h4>
                 <label className="flex items-center gap-1 text-xs text-gray-600">
                   <input
                     type="checkbox"
                     checked={multiSelect}
-                    onChange={(e) => setMultiSelect(e.target.checked)}
+                    onChange={(e) => {
+                      setMultiSelect(e.target.checked)
+                      setDdOpen(false)
+                    }}
                     className="rounded border-gray-300"
                   />
                   Múltiple
                 </label>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setDdOpen((s) => !s)}
-                className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2 text-left shadow-sm hover:border-gray-400"
-              >
-                <span className="truncate text-sm text-gray-700">
-                  {selectedRooms.length === 0
-                    ? "Seleccionar habitación(es)"
-                    : selectedRooms.map((r) => `Hab ${r.roomNumber}`).join(", ")}
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-4 w-4 transition ${ddOpen ? "rotate-180" : ""}`}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
+              {/* MODO MÚLTIPLE: dropdown personalizado con feedback */}
+              {multiSelect ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDdOpen((s) => !s)}
+                    className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2 text-left shadow-sm hover:border-gray-400"
+                  >
+                    <span className="truncate text-sm text-gray-700">{summaryText}</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`h-4 w-4 transition ${ddOpen ? "rotate-180" : ""}`}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
 
-              {ddOpen && (
-                <div className="absolute z-50 mt-2 max-h-64 w-[32rem] overflow-auto rounded-xl border bg-white p-2 shadow-2xl">
-                  {availableRooms.map((room) => {
-                    const disabled = isUnavailable(room.roomNumber)
-                    const checked = selectedRooms.some((r) => r.roomNumber === room.roomNumber)
-                    return (
-                      <button
-                        key={room.roomNumber}
-                        type="button"
-                        onClick={() => toggleRoomByNumber(room.roomNumber)}
-                        disabled={disabled}
-                        className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left ${
-                          disabled ? "cursor-not-allowed bg-gray-100 opacity-70" : "hover:bg-gray-50"
-                        } ${checked ? "ring-1 ring-yellow-400" : ""}`}
-                      >
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            Habitación {room.roomNumber} – {room.roomType}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            RD${room.price.toLocaleString()} por noche
-                            <span className="text-red-600">{unavailabilityLabel(room.roomNumber)}</span>
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
+                  {ddOpen && (
+                    <div className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-xl border bg-white p-2 shadow-2xl">
+                      {availableRooms.map((room) => {
+                        const disabled = isUnavailable(room.roomNumber)
+                        const checked = selectedRooms.some((r) => r.roomNumber === room.roomNumber)
+                        return (
+                          <button
+                            key={room.roomNumber}
+                            type="button"
+                            onClick={() => toggleRoomByNumber(room.roomNumber)}
+                            disabled={disabled}
+                            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left ${
+                              disabled ? "cursor-not-allowed bg-gray-100 opacity-70" : "hover:bg-gray-50"
+                            } ${checked ? "ring-1 ring-yellow-400 bg-yellow-50" : ""}`}
+                          >
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                Habitación {room.roomNumber} – {room.roomType}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                RD${room.price.toLocaleString()} por noche
+                                <span className="text-red-600">{unavailabilityLabel(room.roomNumber)}</span>
+                              </div>
+                            </div>
+                            {checked && (
+                              <span className="ml-2 rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-bold text-white">
+                                ✓
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Chips de seleccionados */}
+                  {selectedRooms.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedRooms.map((room) => (
+                        <span
+                          key={room.roomNumber}
+                          className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800"
+                        >
+                          Hab {room.roomNumber}
+                          <button
+                            type="button"
+                            className="ml-1 rounded-full px-1 text-yellow-800 hover:text-red-600"
+                            onClick={() => toggleRoomByNumber(room.roomNumber)}
+                            aria-label={`Quitar habitación ${room.roomNumber}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                // MODO SIMPLE: select nativo
+                <select
+                  className="w-full rounded border p-2"
+                  value={selectedRooms.length > 0 ? selectedRooms[0].roomNumber : ""}
+                  onChange={(e) => toggleRoomByNumber(e.target.value)}
+                >
+                  <option value="">Seleccionar habitación</option>
+                  {availableRooms.map((room) => (
+                    <option key={room.roomNumber} value={room.roomNumber} disabled={isUnavailable(room.roomNumber)}>
+                      Habitación {room.roomNumber} – {room.roomType} – RD${room.price.toLocaleString()}
+                      {unavailabilityLabel(room.roomNumber)}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
 
-            {/* Total habitaciones */}
+            {/* Bloque de pagos */}
             {selectedRooms.length > 0 && (
               <div className="mt-2 text-sm font-semibold text-gray-800">
                 Total ({nights} noche(s)): RD${totalRoomsAmount.toLocaleString()}
               </div>
             )}
 
-            <select
-              className="mb-2 mt-3 w-full rounded border p-2"
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
-            >
-              <option value="parcial">Parcial</option>
-              <option value="pagado">Pagado</option>
-            </select>
+            <label className="mt-2 block text-sm font-medium">Monto pagado</label>
+            <input
+              type="number"
+              className="mb-2 w-full rounded border p-2"
+              placeholder="Monto pagado"
+              value={amountPaid === 0 ? "" : amountPaid}
+              onChange={(e) => {
+                const val = Number(e.target.value) || 0
+                setAmountPaid(val > totalRoomsAmount ? totalRoomsAmount : val)
+              }}
+            />
 
-            {paymentStatus === "parcial" && (
-              <>
-                <input
-                  type="number"
-                  className="mb-2 w-full rounded border p-2"
-                  placeholder="Monto pagado"
-                  value={amountPaid === 0 ? "" : amountPaid}
-                  onChange={(e) => setAmountPaid(Number(e.target.value) || 0)}
-                />
-
-                {selectedRooms.length > 0 && (
-                  <div className="mb-2 text-sm text-gray-700">
-                    Restante:{" "}
-                    <span className="font-semibold text-red-600">
-                      RD${Math.max(totalRoomsAmount - amountPaid, 0).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-              </>
+            {selectedRooms.length > 0 && (
+              <p className="mb-2 text-sm text-gray-700">
+                Pendiente:{" "}
+                <span className="font-semibold text-red-600">
+                  RD${pendiente.toLocaleString()}
+                </span>
+              </p>
             )}
 
             <select
@@ -337,22 +379,35 @@ export default function CalendarModal({ isOpen, onClose, selectedDate, onDataCha
             <h3 className="mb-2 text-md font-semibold">Reservas existentes</h3>
             {reservations.length > 0 ? (
               <ul className="space-y-2">
-                {reservations.map((r) => (
-                  <li
-                    key={r.reservationId}
-                    className="cursor-pointer rounded border p-2 hover:bg-gray-100"
-                    onClick={() => setDetailReservation(r)}
-                  >
-                    <span className="font-medium">{r.guestName}</span> –{" "}
-                    {r.rooms.map((room) => room.roomNumber).join(", ")} (
-                    {r.paymentStatus === "pagado" ? (
-                      <span className="font-semibold text-green-600">Pagado</span>
-                    ) : (
-                      <span className="font-semibold text-yellow-600">Parcial (RD${r.amountPaid})</span>
-                    )}
-                    )
-                  </li>
-                ))}
+                {reservations.map((r) => {
+                  const checkin = new Date(r.checkinDate)
+                  const checkout = new Date(r.checkoutDate)
+                  const nights = Math.max(
+                    (checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24),
+                    1
+                  )
+                  const total = r.rooms.reduce((s, room) => s + room.price * nights, 0)
+                  const pendiente = Math.max(total - (r.amountPaid || 0), 0)
+
+                  return (
+                    <li
+                      key={r.reservationId}
+                      className="cursor-pointer rounded border p-2 hover:bg-gray-100"
+                      onClick={() => setDetailReservation(r)}
+                    >
+                      <span className="font-medium">{r.guestName}</span> –{" "}
+                      {r.rooms.map((room) => room.roomNumber).join(", ")} (
+                      {r.paymentStatus === "pagado" ? (
+                        <span className="font-semibold text-green-600">Pagado</span>
+                      ) : (
+                        <span className="font-semibold text-yellow-600">
+                          Parcial (RD${(r.amountPaid || 0).toLocaleString()}) – Pendiente RD${pendiente.toLocaleString()}
+                        </span>
+                      )}
+                      )
+                    </li>
+                  )
+                })}
               </ul>
             ) : (
               <p className="text-sm text-gray-500">No hay reservas registradas</p>

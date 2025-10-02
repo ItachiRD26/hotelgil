@@ -30,18 +30,18 @@ export default function Footer() {
         {/* Contacto */}
         <div className="text-gray-600 mb-6">
           <p>Calle Rodriguez Camargo #123, Montecristi, República Dominicana</p>
-          <p>Tel: +1 (809) 000-0000</p>
+          <p>Tel: +1 (809) 579-2629</p>
         </div>
 
         {/* Redes sociales */}
         <div className="flex justify-center space-x-6 text-yellow-600 text-xl mb-6">
-          <a href="https://wa.me/18090000000" target="_blank" className="hover:text-gray-800 transition">
+          <a href="https://wa.me/18095792629" target="_blank" className="hover:text-gray-800 transition">
             <FaWhatsapp />
           </a>
           <a href="https://facebook.com/" target="_blank" className="hover:text-gray-800 transition">
             <FaFacebookF />
           </a>
-          <a href="https://instagram.com/" target="_blank" className="hover:text-gray-800 transition">
+          <a href="https://www.instagram.com/hotelgil_rd/" target="_blank" className="hover:text-gray-800 transition">
             <FaInstagram />
           </a>
         </div>
