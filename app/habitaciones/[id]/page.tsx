@@ -77,7 +77,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
       <div className="text-center">
         <Link
-          href="https://wa.me/18090000000?text=Hola,%20quiero%20reservar%20una%20habitación%20en%20Hotel%20Gil"
+          href="https://wa.me/18296707464?text=Hola,%20quiero%20reservar%20una%20habitación%20en%20Hotel%20Gil"
           className="inline-block bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition"
         >
           Reservar ahora

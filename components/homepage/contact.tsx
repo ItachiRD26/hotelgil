@@ -23,7 +23,7 @@ export default function Contact() {
       title: "WhatsApp",
       desc: "Reserva y consultas vía WhatsApp",
       icon: <FaWhatsapp size={36} className="text-yellow-600" />,
-      link: "https://wa.me/18090000000",
+      link: "https://wa.me/18296707464",
       label: "Escribir",
     },
   ];
